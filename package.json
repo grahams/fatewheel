@@ -1,0 +1,28 @@
+{
+  "name": "fatewheel",
+  "version": "1.0.0",
+  "description": "The All-Knowing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grahams/fatewheel.git"
+  },
+  "author": "Sean Graham",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/grahams/fatewheel/issues"
+  },
+  "homepage": "https://github.com/grahams/fatewheel#readme",
+  "devDependencies": {
+    "dotenv": "^8.0.0"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "dotenv": "^8.2.0",
+    "slackbots": "^1.2.0"
+  }
+}
