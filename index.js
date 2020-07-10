@@ -1,9 +1,15 @@
 const SlackBot = require('slackbots');
-const axios = require('axios')
-const dotenv = require('dotenv')
-const fs = require('fs');
+const axios = require('axios');
+const dotenv = require('dotenv');
+const sqlite3 = require('sqlite3');
 
-const lines = fs.readFileSync('better-fates.txt').toString().split("\n")
+let db = new sqlite3.Database('./db/fates.sqlite', sqlite3.OPEN_READWRITE, (err) => {
+    if (err) {
+        console.error(err.message);
+    }
+
+    console.log('Connected to the fates database.');
+});
 
 dotenv.config()
 
@@ -32,21 +38,52 @@ bot.on('message', (data) => {
         return;
     }
 
-    handleMessage(data.text, data.channel);
+    handleMessage(data);
 
 	return;
 })
 
-function handleMessage(message, channel) {
-	if(message.startsWith(`<@${bot.self.id}> `) ) {
-		var random = Math.floor(Math.random() * lines.length);
+function handleMessage(data) {
+	const params = {
+		icon_emoji: ':fate_wheel_avatar:'
+	}
 
+	if(data.text.startsWith(`<@${bot.self.id}> help`)) {
+		bot.postMessage(data.channel, "Fuckin help yourself dipshit", params);
+	}
+	else if(data.text.startsWith(`<@${bot.self.id}> addfate `)) {
+		var i = data.text.indexOf(" addfate ");
+		var f = data.text.substring(i+9);
+		addFate(f, data.channel);
+	}
+	else {
+		sendFate(data.text, data.channel);
+	}
+}
+
+function addFate(newFate, channel) {
+	const params = {
+		icon_emoji: ':fate_wheel_avatar:'
+	}
+
+	db.run(`INSERT INTO fates VALUES(?, ?, ?)`, [newFate, Date.now(), Date.now()], function(err) {
+		if (err) {
+			return console.log(err.message);
+		}
+
+		bot.postMessage(channel, `Added new fate "${newFate}" with id ${this.lastID}`, params);}
+	);
+}
+
+function sendFate(message, channel) {
+	if(message.startsWith(`<@${bot.self.id}> `) ) {
 		const params = {
 			icon_emoji: ':fate_wheel_avatar:'
 		}
 
+		db.get("SELECT * FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
+			bot.postMessage(channel, row.fateText, params);
+		});
 
-		bot.postMessage(channel, lines[random], params);
 	}
 }
-
