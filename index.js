@@ -19,6 +19,10 @@ bot.on('error', (err) => {
 
 // Message Handler
 bot.on('message', (data) => {
+    if(data == undefined) {
+        return;
+    }
+
     // Only read messages that are not other bot messages
     if( (data.subtype && (data.subtype === 'bot_message' || data.subtype === 'message_replied')) || (data.message && data.data.subtype && data.data.subtype === 'bot_message')) {
 		return
@@ -38,7 +42,7 @@ function handleMessage(message, channel) {
 		var random = Math.floor(Math.random() * lines.length);
 
 		const params = {
-			icon_emoji: ':robot_face:'
+			icon_emoji: ':fate_wheel_avatar:'
 		}
 
 
