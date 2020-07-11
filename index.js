@@ -73,8 +73,12 @@ function handleMessage(data) {
                 getLast10(data.channel);
 
                 break;
+            case 'fatewith':
+                fateWith(text, data.channel);
+
+                break;
             default:
-                sendFate(data.text, data.channel);
+                sendFate(data.channel);
         }
     }
 }
@@ -151,15 +155,22 @@ function getLast10(channel) {
     });
 }
 
-function sendFate(message, channel) {
-    if(message.startsWith(`<@${bot.self.id}> `) ) {
-        const params = {
-            icon_emoji: ':fate_wheel_avatar:'
-        }
-
-        db.get("SELECT * FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
-            bot.postMessage(channel, row.fateText, params);
-        });
-
+function fateWith(text, channel) {
+    const params = {
+        icon_emoji: ':fate_wheel_avatar:'
     }
+
+    db.get("SELECT * FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
+        bot.postMessage(channel, `${row.fateText} ${text.toUpperCase()}`, params);
+    });
+}
+
+function sendFate(channel) {
+    const params = {
+        icon_emoji: ':fate_wheel_avatar:'
+    }
+
+    db.get("SELECT * FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
+        bot.postMessage(channel, row.fateText, params);
+    });
 }
