@@ -88,7 +88,15 @@ function help(channel) {
         icon_emoji: ':fate_wheel_avatar:'
     }
 
-    bot.postMessage(channel, "Fuckin help yourself dipshit", params);
+    var helpMessage = "*help* - this message \n";
+    helpMessage += "*addfate {text}* - add a fate containing {text}\n";
+    helpMessage += "*getfate {id}* - retrieve fate #{id}\n";
+    helpMessage += "*rmfate {id}* - delete fate #{id}\n";
+    helpMessage += "*last* - return the last 10 fates\n";
+    helpMessage += "*fatewith {text}* - append {text} to a random fate\n";
+    helpMessage += "any other text, spit out a random fate\n";
+
+    bot.postMessage(channel, helpMessage, params);
 }
 
 function addFate(newFate, channel) {
