@@ -42,13 +42,17 @@ bot.on('message', (data) => {
 })
 
 function handleMessage(data) {
-    const re = new RegExp(/(<@.*>).(\S+).(.*)/);
+    const re = new RegExp(/<@(.*)> (\S+) ?(.*)?/);
+
+    if(data.text === undefined) {
+        return;
+    }
 
     const atId = data.text.replace(re, "$1");
     const command = data.text.replace(re, "$2");
     const text = data.text.replace(re, "$3");
 
-    if(atId === `<@${bot.self.id}>`) {
+    if(atId === bot.self.id) {
         switch(command) {
             case 'help':
                 help(data.channel);
@@ -63,6 +67,10 @@ function handleMessage(data) {
                 break;
             case 'rmfate':
                 rmFate(text, data.channel);
+
+                break;
+            case 'last':
+                getLast10(data.channel);
 
                 break;
             default:
@@ -120,6 +128,26 @@ function getFate(rowId, channel) {
 		}
 
         bot.postMessage(channel, `${rowId}: ${row.fateText}`, params);
+    });
+}
+
+function getLast10(channel) {
+	const params = {
+		icon_emoji: ':fate_wheel_avatar:'
+	}
+
+    db.all(`SELECT rowid,fateText FROM fates ORDER BY ROWID DESC LIMIT 10;`, (err, rows) => {
+		if (err) {
+			return console.log(err.message);
+		}
+
+        var responseMessage = "";
+
+        for(var x = 0; x < rows.length; x += 1) {
+            responseMessage += `${rows[x].rowid}: ${rows[x].fateText}\n`;
+        }
+
+        bot.postMessage(channel, responseMessage, params);
     });
 }
 
