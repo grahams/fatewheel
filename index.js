@@ -7,8 +7,6 @@ let db = new sqlite3.Database('./db/fates.sqlite', sqlite3.OPEN_READWRITE, (err)
     if (err) {
         console.error(err.message);
     }
-
-    console.log('Connected to the fates database.');
 });
 
 dotenv.config()
@@ -30,7 +28,7 @@ bot.on('message', (data) => {
     }
 
     // Only read messages that are not other bot messages
-    if( (data.subtype && (data.subtype === 'bot_message' || data.subtype === 'message_replied')) || (data.message && data.data.subtype && data.data.subtype === 'bot_message')) {
+    if( (data.subtype && (data.subtype === 'bot_message' || data.subtype === 'message_replied')) || (data.message && data.data && data.data.subtype && data.data.subtype === 'bot_message')) {
 		return
     }
 
@@ -44,21 +42,41 @@ bot.on('message', (data) => {
 })
 
 function handleMessage(data) {
+    const re = new RegExp(/(<@.*>).(\S+).(.*)/);
+
+    const atId = data.text.replace(re, "$1");
+    const command = data.text.replace(re, "$2");
+    const text = data.text.replace(re, "$3");
+
+    if(atId === `<@${bot.self.id}>`) {
+        switch(command) {
+            case 'help':
+                help(data.channel);
+                break;
+            case 'addfate':
+                addFate(text, data.channel);
+
+                break;
+            case 'getfate':
+                getFate(text, data.channel);
+
+                break;
+            case 'rmfate':
+                rmFate(text, data.channel);
+
+                break;
+            default:
+                sendFate(data.text, data.channel);
+        }
+    }
+}
+
+function help(channel) {
 	const params = {
 		icon_emoji: ':fate_wheel_avatar:'
 	}
 
-	if(data.text.startsWith(`<@${bot.self.id}> help`)) {
-		bot.postMessage(data.channel, "Fuckin help yourself dipshit", params);
-	}
-	else if(data.text.startsWith(`<@${bot.self.id}> addfate `)) {
-		var i = data.text.indexOf(" addfate ");
-		var f = data.text.substring(i+9);
-		addFate(f, data.channel);
-	}
-	else {
-		sendFate(data.text, data.channel);
-	}
+    bot.postMessage(channel, "Fuckin help yourself dipshit", params);
 }
 
 function addFate(newFate, channel) {
@@ -73,6 +91,36 @@ function addFate(newFate, channel) {
 
 		bot.postMessage(channel, `Added new fate "${newFate}" with id ${this.lastID}`, params);}
 	);
+}
+
+function rmFate(rowId, channel) {
+	const params = {
+		icon_emoji: ':fate_wheel_avatar:'
+	}
+
+    console.log("rowId: " + rowId);
+
+	db.run(`DELETE FROM fates WHERE ROWID = ${rowId}`, function(err) {
+		if (err) {
+			return console.log(err.message);
+		}
+
+		bot.postMessage(channel, `Removed fate with id ${rowId}`, params);}
+	);
+}
+
+function getFate(rowId, channel) {
+	const params = {
+		icon_emoji: ':fate_wheel_avatar:'
+	}
+
+    db.get(`SELECT * FROM fates WHERE ROWID = ${rowId}`, (err, row) => {
+		if (err) {
+			return console.log(err.message);
+		}
+
+        bot.postMessage(channel, `${rowId}: ${row.fateText}`, params);
+    });
 }
 
 function sendFate(message, channel) {
