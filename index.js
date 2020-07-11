@@ -29,7 +29,7 @@ bot.on('message', (data) => {
 
     // Only read messages that are not other bot messages
     if( (data.subtype && (data.subtype === 'bot_message' || data.subtype === 'message_replied')) || (data.message && data.data && data.data.subtype && data.data.subtype === 'bot_message')) {
-		return
+        return
     }
 
     if(data.type !== 'message') {
@@ -38,7 +38,7 @@ bot.on('message', (data) => {
 
     handleMessage(data);
 
-	return;
+    return;
 })
 
 function handleMessage(data) {
@@ -80,66 +80,66 @@ function handleMessage(data) {
 }
 
 function help(channel) {
-	const params = {
-		icon_emoji: ':fate_wheel_avatar:'
-	}
+    const params = {
+        icon_emoji: ':fate_wheel_avatar:'
+    }
 
     bot.postMessage(channel, "Fuckin help yourself dipshit", params);
 }
 
 function addFate(newFate, channel) {
-	const params = {
-		icon_emoji: ':fate_wheel_avatar:'
-	}
+    const params = {
+        icon_emoji: ':fate_wheel_avatar:'
+    }
 
-	db.run(`INSERT INTO fates VALUES(?, ?, ?)`, [newFate, Date.now(), Date.now()], function(err) {
-		if (err) {
-			return console.log(err.message);
-		}
+    db.run(`INSERT INTO fates VALUES(?, ?, ?)`, [newFate, Date.now(), Date.now()], function(err) {
+        if (err) {
+            return console.log(err.message);
+        }
 
-		bot.postMessage(channel, `Added new fate "${newFate}" with id ${this.lastID}`, params);}
-	);
+        bot.postMessage(channel, `Added new fate "${newFate}" with id ${this.lastID}`, params);}
+    );
 }
 
 function rmFate(rowId, channel) {
-	const params = {
-		icon_emoji: ':fate_wheel_avatar:'
-	}
+    const params = {
+        icon_emoji: ':fate_wheel_avatar:'
+    }
 
     console.log("rowId: " + rowId);
 
-	db.run(`DELETE FROM fates WHERE ROWID = ${rowId}`, function(err) {
-		if (err) {
-			return console.log(err.message);
-		}
+    db.run(`DELETE FROM fates WHERE ROWID = ${rowId}`, function(err) {
+        if (err) {
+            return console.log(err.message);
+        }
 
-		bot.postMessage(channel, `Removed fate with id ${rowId}`, params);}
-	);
+        bot.postMessage(channel, `Removed fate with id ${rowId}`, params);}
+    );
 }
 
 function getFate(rowId, channel) {
-	const params = {
-		icon_emoji: ':fate_wheel_avatar:'
-	}
+    const params = {
+        icon_emoji: ':fate_wheel_avatar:'
+    }
 
     db.get(`SELECT * FROM fates WHERE ROWID = ${rowId}`, (err, row) => {
-		if (err) {
-			return console.log(err.message);
-		}
+        if (err) {
+            return console.log(err.message);
+        }
 
         bot.postMessage(channel, `${rowId}: ${row.fateText}`, params);
     });
 }
 
 function getLast10(channel) {
-	const params = {
-		icon_emoji: ':fate_wheel_avatar:'
-	}
+    const params = {
+        icon_emoji: ':fate_wheel_avatar:'
+    }
 
     db.all(`SELECT rowid,fateText FROM fates ORDER BY ROWID DESC LIMIT 10;`, (err, rows) => {
-		if (err) {
-			return console.log(err.message);
-		}
+        if (err) {
+            return console.log(err.message);
+        }
 
         var responseMessage = "";
 
@@ -152,14 +152,14 @@ function getLast10(channel) {
 }
 
 function sendFate(message, channel) {
-	if(message.startsWith(`<@${bot.self.id}> `) ) {
-		const params = {
-			icon_emoji: ':fate_wheel_avatar:'
-		}
+    if(message.startsWith(`<@${bot.self.id}> `) ) {
+        const params = {
+            icon_emoji: ':fate_wheel_avatar:'
+        }
 
-		db.get("SELECT * FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
-			bot.postMessage(channel, row.fateText, params);
-		});
+        db.get("SELECT * FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
+            bot.postMessage(channel, row.fateText, params);
+        });
 
-	}
+    }
 }
