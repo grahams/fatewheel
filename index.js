@@ -104,7 +104,7 @@ function addFate(newFate, channel) {
         icon_emoji: ':fate_wheel_avatar:'
     }
 
-    db.run(`INSERT INTO fates VALUES(?, ?, ?)`, [newFate, Date.now(), Date.now()], function(err) {
+    db.run(`INSERT INTO fates VALUES(?, ?, ?)`, [newFate.toUpperCase(), Date.now(), Date.now()], function(err) {
         if (err) {
             return console.log(err.message);
         }
@@ -169,7 +169,7 @@ function fateWith(text, channel) {
     }
 
     db.get("SELECT * FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
-        bot.postMessage(channel, `${row.fateText} ${text.toUpperCase()}`, params);
+        bot.postMessage(channel, `${row.fateText} ${text}`.toUpperCase(), params);
     });
 }
 
@@ -179,6 +179,6 @@ function sendFate(channel) {
     }
 
     db.get("SELECT * FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
-        bot.postMessage(channel, row.fateText, params);
+        bot.postMessage(channel, row.fateText.toUpperCase(), params);
     });
 }
