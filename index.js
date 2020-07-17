@@ -104,13 +104,26 @@ function addFate(newFate, channel) {
         icon_emoji: ':fate_wheel_avatar:'
     }
 
-    db.run(`INSERT INTO fates VALUES(?, ?, ?)`, [newFate.toUpperCase(), Date.now(), Date.now()], function(err) {
+    db.all(`SELECT * FROM fates WHERE fateText="${newFate.toUpperCase()}"`, (err, rows) => {
         if (err) {
             return console.log(err.message);
         }
 
-        bot.postMessage(channel, `Added new fate "${newFate}" with id ${this.lastID}`, params);}
-    );
+        if(rows.length > 0) {
+            bot.postMessage(channel, `${newFate} already exists`, params);
+        }
+        else {
+            db.run(`INSERT INTO fates VALUES(?, ?, ?, ?)`, [newFate.toUpperCase(), Date.now(), Date.now(), null], 
+                function(err) {
+                    if (err) {
+                        return console.log(err.message);
+                    }
+
+                    bot.postMessage(channel, `Added new fate "${newFate}" with id ${this.lastID}`, params);
+                }
+            );
+        }
+    });
 }
 
 function rmFate(rowId, channel) {
