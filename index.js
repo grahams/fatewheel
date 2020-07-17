@@ -69,12 +69,17 @@ function handleMessage(data) {
                 rmFate(text, data.channel);
 
                 break;
-            case 'last':
-                getLast10(data.channel);
-
-                break;
             case 'fatewith':
                 fateWith(text, data.channel);
+
+                break;
+            case 'last':
+            case 'lastadded':
+                getRecentlyAdded(data.channel);
+
+                break;
+            case 'lastused':
+                getRecentlyUsed(data.channel);
 
                 break;
             default:
@@ -92,7 +97,8 @@ function help(channel) {
     helpMessage += "*addfate {text}* - add a fate containing {text}\n";
     helpMessage += "*getfate {id}* - retrieve fate #{id}\n";
     helpMessage += "*rmfate {id}* - delete fate #{id}\n";
-    helpMessage += "*last* - return the last 10 fates\n";
+    helpMessage += "*lastused* - return the last 10 fates used\n";
+    helpMessage += "*lastadded* - return the last 10 fates added\n";
     helpMessage += "*fatewith {text}* - append {text} to a random fate\n";
     helpMessage += "any other text, spit out a random fate\n";
 
@@ -131,8 +137,6 @@ function rmFate(rowId, channel) {
         icon_emoji: ':fate_wheel_avatar:'
     }
 
-    console.log("rowId: " + rowId);
-
     db.run(`DELETE FROM fates WHERE ROWID = ${rowId}`, function(err) {
         if (err) {
             return console.log(err.message);
@@ -156,7 +160,7 @@ function getFate(rowId, channel) {
     });
 }
 
-function getLast10(channel) {
+function getRecentlyAdded(channel) {
     const params = {
         icon_emoji: ':fate_wheel_avatar:'
     }
@@ -176,13 +180,39 @@ function getLast10(channel) {
     });
 }
 
+function getRecentlyUsed(channel) {
+    const params = {
+        icon_emoji: ':fate_wheel_avatar:'
+    }
+
+    db.all(`SELECT rowid,fateText,epochDateLastUsed 
+                FROM fates 
+                WHERE epochDateLastUsed IS NOT NULL
+                ORDER BY epochDateLastUsed 
+                DESC 
+                LIMIT 10;`, (err, rows) => {
+        if (err) {
+            return console.log(err.message);
+        }
+
+        var responseMessage = "";
+
+        for(var x = 0; x < rows.length; x += 1) {
+            responseMessage += `${rows[x].rowid}: ${rows[x].fateText}\n`;
+        }
+
+        bot.postMessage(channel, responseMessage, params);
+    });
+}
+
 function fateWith(text, channel) {
     const params = {
         icon_emoji: ':fate_wheel_avatar:'
     }
 
-    db.get("SELECT * FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
+    db.get("SELECT fateText,rowId FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
         bot.postMessage(channel, `${row.fateText} ${text}`.toUpperCase(), params);
+        updateUsedDate(row.rowid);
     });
 }
 
@@ -191,7 +221,20 @@ function sendFate(channel) {
         icon_emoji: ':fate_wheel_avatar:'
     }
 
-    db.get("SELECT * FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
+    db.get("SELECT fateText,rowId FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
         bot.postMessage(channel, row.fateText.toUpperCase(), params);
+        updateUsedDate(row.rowid);
+    });
+}
+
+function updateUsedDate(rowId) {
+    var newDate = Date.now();
+
+    db.run(`UPDATE fates 
+                SET epochDateLastUsed = ?
+                WHERE ROWID = ?`, [newDate, rowId], function(err) {
+        if (err) {
+            return console.log(err.message);
+        }
     });
 }
