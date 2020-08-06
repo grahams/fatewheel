@@ -101,6 +101,7 @@ function help(channel) {
     helpMessage += "*addfate {text}* - add a fate containing {text}\n";
     helpMessage += "*getfate {id}* - retrieve fate #{id}\n";
     helpMessage += "*rmfate {id}* - delete fate #{id}\n";
+    helpMessage += "*rmlast* - delete the most recently shown fate\n";
     helpMessage += "*lastused* - return the last 10 fates used\n";
     helpMessage += "*lastadded* - return the last 10 fates added\n";
     helpMessage += "*fatewith {text}* - append {text} to a random fate\n";
@@ -159,21 +160,14 @@ function rmLastFate(channel) {
                 WHERE epochDateLastUsed IS NOT NULL
                 ORDER BY epochDateLastUsed 
                 DESC 
-                LIMIT 10;`, (err, rows) => {
+                LIMIT 1;`, (err, rows) => {
         if (err) {
             return console.log(err.message);
         }
 
-    db.run(`DELETE FROM fates WHERE ROWID = ${rows[0].rowid}`, function(err) {
-        if (err) {
-            return console.log(err.message);
-        }
-
-        bot.postMessage(channel, `Removed fate with id ${rows[0].rowid}: ${rows[0].fateText}`, params);}
-    );
+        rmFate(rows[0].rowid, channel);
+    })
 }
-
-
 
 function getFate(rowId, channel) {
     const params = {
