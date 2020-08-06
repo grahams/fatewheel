@@ -69,6 +69,10 @@ function handleMessage(data) {
                 rmFate(text, data.channel);
 
                 break;
+            case 'rmlast':
+                rmLastFate(data.channel);
+                
+                break;
             case 'fatewith':
                 fateWith(text, data.channel);
 
@@ -145,6 +149,31 @@ function rmFate(rowId, channel) {
         bot.postMessage(channel, `Removed fate with id ${rowId}`, params);}
     );
 }
+
+function rmLastFate(channel) {
+    const params = {
+        icon_emoji: ':fate_wheel_avatar:'
+    }
+    db.all(`SELECT rowid,fateText,epochDateLastUsed 
+                FROM fates 
+                WHERE epochDateLastUsed IS NOT NULL
+                ORDER BY epochDateLastUsed 
+                DESC 
+                LIMIT 10;`, (err, rows) => {
+        if (err) {
+            return console.log(err.message);
+        }
+
+    db.run(`DELETE FROM fates WHERE ROWID = ${rows[0].rowid}`, function(err) {
+        if (err) {
+            return console.log(err.message);
+        }
+
+        bot.postMessage(channel, `Removed fate with id ${rows[0].rowid}: ${rows[0].fateText}`, params);}
+    );
+}
+
+
 
 function getFate(rowId, channel) {
     const params = {
