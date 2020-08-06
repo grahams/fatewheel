@@ -86,6 +86,10 @@ function handleMessage(data) {
                 getRecentlyUsed(data.channel);
 
                 break;
+            case 'search':
+                searchFates(text, data.channel);
+
+                break
             default:
                 sendFate(data.channel);
         }
@@ -105,6 +109,7 @@ function help(channel) {
     helpMessage += "*lastused* - return the last 10 fates used\n";
     helpMessage += "*lastadded* - return the last 10 fates added\n";
     helpMessage += "*fatewith {text}* - append {text} to a random fate\n";
+    helpMessage += "*search {text}* - returns first 10 fates containing {text}\n";
     helpMessage += "any other text, spit out a random fate\n";
 
     bot.postMessage(channel, helpMessage, params);
@@ -180,6 +185,26 @@ function getFate(rowId, channel) {
         }
 
         bot.postMessage(channel, `${rowId}: ${row.fateText}`, params);
+    });
+}
+
+function searchFates(term, channel) {
+    const params = {
+        icon_emoji: ':fate_wheel_avatar:'
+    }
+
+    db.all(`SELECT rowid,fateText FROM fates WHERE fateText LIKE "%${term}%" LIMIT 10;`, (err, rows) => {
+        if (err) {
+            return console.log(err.message);
+        }
+
+        var responseMessage = "";
+
+        for(var x = 0; x < rows.length; x += 1) {
+            responseMessage += `${rows[x].rowid}: ${rows[x].fateText}\n`;
+        }
+
+        bot.postMessage(channel, responseMessage, params);
     });
 }
 
