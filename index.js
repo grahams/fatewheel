@@ -101,7 +101,7 @@ function help(channel) {
         icon_emoji: ':fate_wheel_avatar:'
     }
 
-    var helpMessage = "*help* - this message \n";
+    let helpMessage = "*help* - this message \n";
     helpMessage += "*addfate {text}* - add a fate containing {text}\n";
     helpMessage += "*getfate {id}* - retrieve fate #{id}\n";
     helpMessage += "*rmfate {id}* - delete fate #{id}\n";
@@ -147,7 +147,7 @@ function rmFate(rowId, channel) {
         icon_emoji: ':fate_wheel_avatar:'
     }
 
-    db.run(`DELETE FROM fates WHERE ROWID = ${rowId}`, function(err) {
+    db.run(`DELETE FROM fates WHERE ROWID = ${rowId}`, err => {
         if (err) {
             return console.log(err.message);
         }
@@ -198,10 +198,10 @@ function searchFates(term, channel) {
             return console.log(err.message);
         }
 
-        var responseMessage = "";
+        let responseMessage = "";
 
-        for(var x = 0; x < rows.length; x += 1) {
-            responseMessage += `${rows[x].rowid}: ${rows[x].fateText}\n`;
+        for(let row of rows) {
+            responseMessage += `${row.rowid}: ${row.fateText}\n`;
         }
 
         bot.postMessage(channel, responseMessage, params);
@@ -218,10 +218,10 @@ function getRecentlyAdded(channel) {
             return console.log(err.message);
         }
 
-        var responseMessage = "";
+        let responseMessage = "";
 
-        for(var x = 0; x < rows.length; x += 1) {
-            responseMessage += `${rows[x].rowid}: ${rows[x].fateText}\n`;
+        for(let row of rows) {
+            responseMessage += `${row.rowid}: ${row.fateText}\n`;
         }
 
         bot.postMessage(channel, responseMessage, params);
@@ -243,10 +243,10 @@ function getRecentlyUsed(channel) {
             return console.log(err.message);
         }
 
-        var responseMessage = "";
+        let responseMessage = "";
 
-        for(var x = 0; x < rows.length; x += 1) {
-            responseMessage += `${rows[x].rowid}: ${rows[x].fateText}\n`;
+        for(let row of rows) {
+            responseMessage += `${row.rowid}: ${row.fateText}\n`;
         }
 
         bot.postMessage(channel, responseMessage, params);
@@ -276,11 +276,11 @@ function sendFate(channel) {
 }
 
 function updateUsedDate(rowId) {
-    var newDate = Date.now();
+    let newDate = Date.now();
 
     db.run(`UPDATE fates 
                 SET epochDateLastUsed = ?
-                WHERE ROWID = ?`, [newDate, rowId], function(err) {
+                WHERE ROWID = ?`, [newDate, rowId], err => {
         if (err) {
             return console.log(err.message);
         }
