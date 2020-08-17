@@ -200,6 +200,10 @@ function searchFates(term, channel) {
 
         let responseMessage = "";
 
+        if(rows.length === 0) {
+            responseMessage = "No results.";
+        }
+
         for(let row of rows) {
             responseMessage += `${row.rowid}: ${row.fateText}\n`;
         }
