@@ -42,7 +42,7 @@ bot.on('message', (data) => {
 })
 
 function handleMessage(data) {
-    const re = new RegExp(/<@(.*)> (\S+) ?(.*)?/);
+    const re = new RegExp(/<@(.*)>\s+(\S+)\s+(.*)?/);
 
     if(data.text === undefined) {
         return;
