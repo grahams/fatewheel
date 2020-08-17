@@ -126,7 +126,7 @@ function addFate(newFate, channel) {
         }
 
         if(rows.length > 0) {
-            bot.postMessage(channel, `${newFate.toUpperCase()} already exists`, params);
+            bot.postMessage(channel, `"${newFate.toUpperCase()}" ALREADY EXISTS.\nDEATH IS LISTENING, AND WILL TAKE THE FIRST MAN THAT SCREAMS`, params);
         }
         else {
             db.run(`INSERT INTO fates VALUES(?, ?, ?, ?)`, [newFate.toUpperCase(), Date.now(), Date.now(), null], 
@@ -135,7 +135,7 @@ function addFate(newFate, channel) {
                         return console.log(err.message);
                     }
 
-                    bot.postMessage(channel, `Added new fate "${newFate.toUpperCase()}" with id ${this.lastID}`, params);
+                    bot.postMessage(channel, `ADDED NEW FATE "${newFate.toUpperCase()}" WITH ID ${this.lastID}.\nCONGRATULATIONS! YOU'RE THE FIRST TO SURVIVE THE AUDITION! `, params);
                 }
             );
         }
@@ -152,7 +152,7 @@ function rmFate(rowId, channel) {
             return console.log(err.message);
         }
 
-        bot.postMessage(channel, `Removed fate with id ${rowId}`, params);}
+        bot.postMessage(channel, `REMOVED FATE WITH ID ${rowId}\nONE DAY, COCK OF THE WALK. NEXT, A FEATHER DUSTER.`, params);}
     );
 }
 
@@ -201,7 +201,7 @@ function searchFates(term, channel) {
         let responseMessage = "";
 
         if(rows.length === 0) {
-            responseMessage = "No results.";
+            responseMessage = "NO RESULTS.  GOODBYE, SOLDIER.";
         }
 
         for(let row of rows) {
