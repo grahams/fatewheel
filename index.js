@@ -90,6 +90,10 @@ function handleMessage(data) {
                 searchFates(text, data.channel);
 
                 break
+            case 'bean':
+                throwBean(data.user, text, data.channel);
+
+                break
             default:
                 sendFate(data.channel);
         }
@@ -264,9 +268,23 @@ function fateWith(text, channel) {
 
     db.get("SELECT fateText,rowId FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
         bot.postMessage(channel, `${row.fateText} ${text}`.toUpperCase(), params);
-        updateUsedDate(row.rowid);
+        updateUsedDate('fates', row.rowid);
     });
 }
+
+function throwBean(sourceUser, target, channel) {
+    const params = {
+        icon_emoji: ':fate_wheel_avatar:'
+    }
+
+    db.get("SELECT beanText,rowId FROM beans ORDER BY RANDOM() LIMIT 1;", (error, row) => {
+        let message = `<@${sourceUser}> gives ${target} an Every Flavour Bean to munch on.  It is ${row.beanText} flavoured!`
+        bot.postMessage(channel, message, params);
+        updateUsedDate('fates', row.rowid);
+    });
+}
+
+
 
 function sendFate(channel) {
     const params = {
@@ -275,14 +293,14 @@ function sendFate(channel) {
 
     db.get("SELECT fateText,rowId FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
         bot.postMessage(channel, row.fateText.toUpperCase(), params);
-        updateUsedDate(row.rowid);
+        updateUsedDate('fates', row.rowid);
     });
 }
 
-function updateUsedDate(rowId) {
+function updateUsedDate(table, rowId) {
     let newDate = Date.now();
 
-    db.run(`UPDATE fates 
+    db.run(`UPDATE ${table} 
                 SET epochDateLastUsed = ?
                 WHERE ROWID = ?`, [newDate, rowId], err => {
         if (err) {
