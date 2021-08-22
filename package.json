@@ -21,11 +21,12 @@
     "dotenv": "^8.0.0"
   },
   "dependencies": {
+    "@slack/bolt": "^3.6.0",
     "axios": ">=0.21.1",
     "dotenv": "^8.2.0",
-    "slackbots": "^1.2.0",
     "node-gyp": ">=8.1.0",
-    "tar": ">=6.1.7",
-    "sqlite3": "^5.0.2"
+    "slackbots": "^1.2.0",
+    "sqlite3": "^4.2.0",
+    "tar": ">=6.1.7"
   }
 }

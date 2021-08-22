@@ -1,146 +1,125 @@
+const { App, directMention } = require('@slack/bolt');
 const SlackBot = require('slackbots');
-const axios = require('axios');
 const dotenv = require('dotenv');
 const sqlite3 = require('sqlite3');
 
-let db = new sqlite3.Database('./db/fates.sqlite', sqlite3.OPEN_READWRITE, (err) => {
+dotenv.config()
+
+let db = new sqlite3.Database(process.env.WHEEL_DB, sqlite3.OPEN_READWRITE, (err) => {
     if (err) {
         console.error(err.message);
     }
 });
 
-dotenv.config()
 
-const bot = new SlackBot({
-    token: `${process.env.BOT_TOKEN}`,
-    name: 'Fate Wheel'
-})
+const app = new App({
+    signingSecret: process.env.SLACK_SIGNING_SECRET,
+    token: process.env.SLACK_BOT_TOKEN,
+	socketMode: true,
+    appToken: process.env.SLACK_APP_TOKEN
+});
 
-// Error Handler
-bot.on('error', (err) => {
-    console.log(err);
-})
+(async () => {
+  // Start your app
+  await app.start(process.env.PORT || 3000);
 
-// Message Handler
-bot.on('message', (data) => {
-    if(data == undefined) {
-        return;
-    }
+  console.log('⚡️ fatewheel is running!');
+})();
 
-    // Only read messages that are not other bot messages
-    if( (data.subtype && (data.subtype === 'bot_message' || data.subtype === 'message_replied')) || (data.message && data.data && data.data.subtype && data.data.subtype === 'bot_message')) {
-        return
-    }
-
-    if(data.type !== 'message') {
-        return;
-    }
-
-    handleMessage(data);
-
-    return;
-})
-
-function handleMessage(data) {
+// app.message(/<@(.*)>\s+(\S+)\s*(.*)?/, async ({ context, say }) => {
+app.message(directMention(), async ({ message, say }) => {
     const re = new RegExp(/<@(.*)>\s+(\S+)\s*(.*)?/);
 
-    if(data.text === undefined) {
+    if(message.text === undefined) {
         return;
     }
 
-    const atId = data.text.replace(re, "$1");
-    const command = data.text.replace(re, "$2");
-    const text = data.text.replace(re, "$3");
+    const atId = message.text.replace(re, "$1");
+    const command = message.text.replace(re, "$2");
+    const text = message.text.replace(re, "$3");
+    const sourceUser = message.user;
 
-    if(atId === bot.self.id) {
-        switch(command) {
-            case 'help':
-                help(data.channel);
-                break;
-            case 'addfate':
-                addFate(text, data.channel);
+    switch(command) {
+        // fates
+        case 'help':
+            help(await say)
+            break;
+        case 'addfate':
+            addFate(text, await say);
 
-                break;
-            case 'getfate':
-                getMessage('fates', text, data.channel);
+            break;
+        case 'getfate':
+            getMessage('fates', text, await say);
 
-                break;
-            case 'rmfate':
-                rmMessage('fates', text, data.channel);
+            break;
+        case 'rmfate':
+            rmMessage('fates', text, await say);
 
-                break;
-            case 'rmlast':
-                rmLastMessage('fates', data.channel);
-                
-                break;
-            case 'fatewith':
-                messageWith('fates', text, data.channel);
+            break;
+        case 'rmlast':
+            rmLastMessage('fates', await say);
+            
+            break;
+        case 'fatewith':
+            messageWith('fates', text, await say);
 
-                break;
-            case 'last':
-            case 'lastadded':
-                getRecentlyAdded("fates", data.channel);
+            break;
+        case 'last':
+        case 'lastadded':
+            getRecentlyAdded("fates", await say);
 
-                break;
-            case 'lastused':
-                getRecentlyUsed("fates", data.channel);
+            break;
+        case 'lastused':
+            getRecentlyUsed("fates", await say);
 
-                break;
-            case 'search':
-                search("fates", text, data.channel);
+            break;
+        case 'search':
+            search("fates", text, await say);
 
-                break
+            break
 
+        // beans
+        case 'addbean':
+            addBean(text, await say);
 
+            break;
+        case 'bean':
+            throwBean(sourceUser, text, await say);
 
+            break
+        case 'beansearch':
+            search("beans", text, await say);
 
-            case 'addbean':
-                addBean(text, data.channel);
+            break
+        case 'beanlast':
+        case 'beanlastadded':
+            getRecentlyAdded("beans", await say);
 
-                break;
+            break;
+        case 'beanlastused':
+            getRecentlyUsed("beans", await say);
 
-            case 'bean':
-                throwBean(data.user, text, data.channel);
+            break;
 
-                break
-            case 'beansearch':
-                search("beans", text, data.channel);
+        case 'getbean':
+            getMessage("beans", text, await say);
 
-                break
-            case 'beanlast':
-            case 'beanlastadded':
-                getRecentlyAdded("beans", data.channel);
+            break;
+        case 'rmbean':
+            rmMessage("beans", text, await say);
 
-                break;
-            case 'beanlastused':
-                getRecentlyUsed("beans", data.channel);
+            break;
+        case 'rmbeanlast':
+            rmLastMessage('beans', await say);
+        
+            break;
 
-                break;
-
-            case 'getbean':
-                getMessage("beans", text, data.channel);
-
-                break;
-            case 'rmbean':
-                rmMessage("beans", text, data.channel);
-
-                break;
-            case 'rmbeanlast':
-                rmLastMessage('beans', data.channel);
-                
-                break;
-
-            default:
-                sendFate(data.channel);
-        }
+        default:
+            sendFate(await say);
     }
-}
+});
 
-function help(channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
-
+function help(say) {
     let helpMessage = "*help* - this message \n";
     helpMessage += "*addfate {text}* - add a fate containing {text}\n";
     helpMessage += "*getfate {id}* - retrieve fate #{id}\n";
@@ -157,31 +136,27 @@ function help(channel) {
     helpMessage += "*addbean {text}* - add a bean containing {text}\n";
     helpMessage += "*getbean {id}* - retrieve bean #{id}\n";
     helpMessage += "*rmbean {id}* - delete bean #{id}\n";
-    helpMessage += "*rmlast* - delete the most recently shown bean\n";
-    helpMessage += "*lastused* - return the last 10 beans used\n";
-    helpMessage += "*lastadded* - return the last 10 beans added\n";
+    helpMessage += "*rmbeanlast* - delete the most recently shown bean\n";
+    helpMessage += "*beanlastused* - return the last 10 beans used\n";
+    helpMessage += "*beanlastadded* - return the last 10 beans added\n";
     helpMessage += "*beanwith {text}* - append {text} to a random bean\n";
-    helpMessage += "*search {text}* - returns first 10 beans containing {text}\n";
+    helpMessage += "*beansearch {text}* - returns first 10 beans containing {text}\n";
 
     helpMessage += "\n"
 
     helpMessage += "any other text, spit out a random fate\n";
 
-    bot.postMessage(channel, helpMessage, params);
+    say(helpMessage);
 }
 
-function addFate(newFate, channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
-
+function addFate(newFate, say) {
     db.all(`SELECT * FROM fates WHERE message="${newFate.toUpperCase()}"`, (err, rows) => {
         if (err) {
             return console.log(err.message);
         }
 
         if(rows.length > 0) {
-            bot.postMessage(channel, `"${newFate.toUpperCase()}" ALREADY EXISTS.\nDEATH IS LISTENING, AND WILL TAKE THE FIRST MAN THAT SCREAMS`, params);
+            say(`"${newFate.toUpperCase()}" ALREADY EXISTS.\nDEATH IS LISTENING, AND WILL TAKE THE FIRST MAN THAT SCREAMS`);
         }
         else {
             db.run(`INSERT INTO fates VALUES(?, ?, ?, ?)`, [newFate.toUpperCase(), Date.now(), Date.now(), null], 
@@ -190,31 +165,24 @@ function addFate(newFate, channel) {
                         return console.log(err.message);
                     }
 
-                    bot.postMessage(channel, `ADDED NEW FATE "${newFate.toUpperCase()}" WITH ID ${this.lastID}.\nCONGRATULATIONS! YOU'RE THE FIRST TO SURVIVE THE AUDITION! `, params);
+                    say(`ADDED NEW FATE "${newFate.toUpperCase()}" WITH ID ${this.lastID}.\nCONGRATULATIONS! YOU'RE THE FIRST TO SURVIVE THE AUDITION! `);
                 }
             );
         }
     });
 }
 
-function rmMessage(table, rowId, channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
-
+function rmMessage(table, rowId, say) {
     db.run(`DELETE FROM ${table} WHERE ROWID = ${rowId}`, err => {
         if (err) {
             return console.log(err.message);
         }
 
-        bot.postMessage(channel, `REMOVED FATE WITH ID ${rowId}\nONE DAY, COCK OF THE WALK. NEXT, A FEATHER DUSTER.`, params);}
+        say(`REMOVED FATE WITH ID ${rowId}\nONE DAY, COCK OF THE WALK. NEXT, A FEATHER DUSTER.`);}
     );
 }
 
-function rmLastMessage(table, channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
+function rmLastMessage(table, say) {
     db.all(`SELECT rowid,message,epochDateLastUsed 
                 FROM ${table} 
                 WHERE epochDateLastUsed IS NOT NULL
@@ -225,29 +193,21 @@ function rmLastMessage(table, channel) {
             return console.log(err.message);
         }
 
-        rmMessage(table, rows[0].rowid, channel);
+        rmMessage(table, rows[0].rowid, say);
     })
 }
 
-function getMessage(table, rowId, channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
-
+function getMessage(table, rowId, say) {
     db.get(`SELECT * FROM ${table} WHERE ROWID = ${rowId}`, (err, row) => {
         if (err) {
             return console.log(err.message);
         }
 
-        bot.postMessage(channel, `${rowId}: ${row.message}`, params);
+        say(`${rowId}: ${row.message}`);
     });
 }
 
-function search(table, term, channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
-
+function search(table, term, say) {
     db.all(`SELECT rowid,message FROM ${table} WHERE message LIKE "%${term}%" LIMIT 15;`, (err, rows) => {
         if (err) {
             return console.log(err.message);
@@ -263,15 +223,11 @@ function search(table, term, channel) {
             responseMessage += `${row.rowid}: ${row.message}\n`;
         }
 
-        bot.postMessage(channel, responseMessage, params);
+        say(responseMessage);
     });
 }
 
-function getRecentlyAdded(table, channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
-
+function getRecentlyAdded(table, say) {
     db.all(`SELECT rowid,message FROM ${table} ORDER BY ROWID DESC LIMIT 10;`, (err, rows) => {
         if (err) {
             return console.log(err.message);
@@ -283,15 +239,11 @@ function getRecentlyAdded(table, channel) {
             responseMessage += `${row.rowid}: ${row.message}\n`;
         }
 
-        bot.postMessage(channel, responseMessage, params);
+        say(responseMessage);
     });
 }
 
-function getRecentlyUsed(table, channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
-
+function getRecentlyUsed(table, say) {
     db.all(`SELECT rowid,message,epochDateLastUsed 
                 FROM ${table} 
                 WHERE epochDateLastUsed IS NOT NULL
@@ -308,45 +260,33 @@ function getRecentlyUsed(table, channel) {
             responseMessage += `${row.rowid}: ${row.message}\n`;
         }
 
-        bot.postMessage(channel, responseMessage, params);
+        say(responseMessage);
     });
 }
 
-function messageWith(table, text, channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
-
+function messageWith(table, text, say) {
     db.get(`SELECT message,rowId FROM ${table} ORDER BY RANDOM() LIMIT 1;`, (error, row) => {
-        bot.postMessage(channel, `${row.message} ${text}`.toUpperCase(), params);
+        say(`${row.message} ${text}`.toUpperCase());
         updateUsedDate(table, row.rowid);
     });
 }
 
-function throwBean(sourceUser, target, channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
-
+function throwBean(sourceUser, target, say) {
     db.get("SELECT message,rowId FROM beans ORDER BY RANDOM() LIMIT 1;", (error, row) => {
         let message = `<@${sourceUser}> gives ${target} an Every Flavour Bean to munch on.  It is ${row.message} flavoured!`
-        bot.postMessage(channel, message, params);
+        say(message);
         updateUsedDate('beans', row.rowid);
     });
 }
 
-function addBean(newBean, channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
-
+function addBean(newBean, say) {
     db.all(`SELECT * FROM beans WHERE message="${newBean}"`, (err, rows) => {
         if (err) {
             return console.log(err.message);
         }
 
         if(rows.length > 0) {
-            bot.postMessage(channel, `"${newBean}" ALREADY EXISTS.\nDEATH IS LISTENING, AND WILL TAKE THE FIRST MAN THAT SCREAMS`, params);
+            say(`"${newBean}" ALREADY EXISTS.\nDEATH IS LISTENING, AND WILL TAKE THE FIRST MAN THAT SCREAMS`);
         }
         else {
             db.run(`INSERT INTO beans VALUES(?, ?, ?, ?)`, [newBean, Date.now(), Date.now(), null], 
@@ -355,20 +295,16 @@ function addBean(newBean, channel) {
                         return console.log(err.message);
                     }
 
-                    bot.postMessage(channel, `Added new bean "${newBean}" with id ${this.lastID}.`, params);
+                    say(`Added new bean "${newBean}" with id ${this.lastID}.`);
                 }
             );
         }
     });
 }
 
-function sendFate(channel) {
-    const params = {
-        icon_emoji: ':fate_wheel_avatar:'
-    }
-
+function sendFate(say) {
     db.get("SELECT message,rowId FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
-        bot.postMessage(channel, row.message.toUpperCase(), params);
+        say(row.message.toUpperCase());
         updateUsedDate('fates', row.rowid);
     });
 }
