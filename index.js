@@ -3,13 +3,14 @@ const SlackBot = require('slackbots');
 const dotenv = require('dotenv');
 const sqlite3 = require('sqlite3');
 
-let db = new sqlite3.Database('./db/fates2.sqlite', sqlite3.OPEN_READWRITE, (err) => {
+dotenv.config()
+
+let db = new sqlite3.Database(process.env.WHEEL_DB, sqlite3.OPEN_READWRITE, (err) => {
     if (err) {
         console.error(err.message);
     }
 });
 
-dotenv.config()
 
 const app = new App({
     signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -37,9 +38,6 @@ app.message(directMention(), async ({ message, say }) => {
     const command = message.text.replace(re, "$2");
     const text = message.text.replace(re, "$3");
     const sourceUser = message.user;
-
-    console.log("bot_id: " + message.bot_id)
-    console.log("user: " + message.user)
 
     switch(command) {
         // fates
