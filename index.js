@@ -1,5 +1,4 @@
 const { App, directMention } = require('@slack/bolt');
-const SlackBot = require('slackbots');
 const dotenv = require('dotenv');
 const sqlite3 = require('sqlite3');
 
@@ -10,7 +9,6 @@ let db = new sqlite3.Database(process.env.WHEEL_DB, sqlite3.OPEN_READWRITE, (err
         console.error(err.message);
     }
 });
-
 
 const app = new App({
     signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -23,10 +21,9 @@ const app = new App({
   // Start your app
   await app.start(process.env.PORT || 3000);
 
-  console.log('⚡️ fatewheel is running!');
+  console.log('fatewheel is running!');
 })();
 
-// app.message(/<@(.*)>\s+(\S+)\s*(.*)?/, async ({ context, say }) => {
 app.message(directMention(), async ({ message, say }) => {
     const re = new RegExp(/<@(.*)>\s+(\S+)\s*(.*)?/);
 
