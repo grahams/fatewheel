@@ -1,6 +1,7 @@
 const { App, directMention } = require('@slack/bolt');
 const dotenv = require('dotenv');
 const sqlite3 = require('sqlite3');
+const randsum = require('randsum').default
 
 dotenv.config()
 
@@ -110,6 +111,14 @@ app.message(directMention(), async ({ message, say }) => {
             rmLastMessage('beans', await say);
         
             break;
+        case 'coinflip':
+            coinFlip(await say);
+            
+            break;
+        case 'roll':
+            roll(text, await say);
+
+            break
 
         default:
             sendFate(await say);
@@ -141,9 +150,51 @@ function help(say) {
 
     helpMessage += "\n"
 
+    helpMessage += "*coinflip* - flips a coin (duh)\n"
+    helpMessage += "*roll* - rolls dice using the NdN syntax (i.e. 4d20)\n"
+
+    helpMessage += "\n"
+
     helpMessage += "any other text, spit out a random fate\n";
 
     say(helpMessage);
+}
+
+function coinFlip(say) {
+    var coin = Math.floor(Math.random() * (2 - 0) + 0);
+    var message = "THE COIN LANDED ON ";
+
+    if(coin === 0) {
+        message += "TAILS!"
+    }
+    else {
+        message += "HEADS!"
+    }
+
+    say(message);
+}
+
+function roll(diceString, say) {
+    var message = "Error, check your syntax" 
+
+    try {
+        var rolls = randsum(diceString, { detailed: true });
+
+        if(rolls.rolls.length > 1) {
+            message = `The total was ${rolls.total} and the individual rolls were [${rolls.rolls[0]}`;
+            for(var x = 1; x < rolls.rolls.length; x += 1) {
+                message += `, ${rolls.rolls[x]}`
+            }
+
+            message += '].'
+        }
+        else {
+            message = `The roll was ${rolls.total}.`;
+        }
+    }
+    catch(e) {}
+
+    say(message);
 }
 
 function addFate(newFate, say) {
