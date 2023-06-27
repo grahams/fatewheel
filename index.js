@@ -198,7 +198,7 @@ function roll(diceString, say) {
 }
 
 function addFate(newFate, say) {
-    db.all(`SELECT * FROM fates WHERE message="${newFate.toUpperCase()}"`, (err, rows) => {
+    db.all(`SELECT * FROM fates WHERE message = ?`,[newFate.toUpperCase()], (err, rows) => {
         if (err) {
             return console.log(err.message);
         }
@@ -221,7 +221,7 @@ function addFate(newFate, say) {
 }
 
 function rmMessage(table, rowId, say) {
-    db.run(`DELETE FROM ${table} WHERE ROWID = ${rowId}`, err => {
+    db.run(`DELETE FROM ${table} WHERE ROWID = ?`, [rowId], err => {
         if (err) {
             return console.log(err.message);
         }
@@ -246,7 +246,7 @@ function rmLastMessage(table, say) {
 }
 
 function getMessage(table, rowId, say) {
-    db.get(`SELECT * FROM ${table} WHERE ROWID = ${rowId}`, (err, row) => {
+    db.get(`SELECT * FROM ${table} WHERE ROWID = ?`, [rowId], (err, row) => {
         if (err) {
             return console.log(err.message);
         }
@@ -328,7 +328,7 @@ function throwBean(sourceUser, target, say) {
 }
 
 function addBean(newBean, say) {
-    db.all(`SELECT * FROM beans WHERE message="${newBean}"`, (err, rows) => {
+    db.all(`SELECT * FROM beans WHERE message = ?`, [newBean], (err, rows) => {
         if (err) {
             return console.log(err.message);
         }
