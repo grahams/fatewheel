@@ -1,0 +1,12 @@
+CREATE TABLE fates (
+  message text(128) NOT NULL,
+  epochDateAdded integer(128) NOT NULL,
+  epochDateModified integer(128) NOT NULL,
+  epochDateLastUsed integer(128)
+);
+CREATE TABLE beans (
+  message text(128) NOT NULL,
+  epochDateAdded integer(128) NOT NULL,
+  epochDateModified integer(128) NOT NULL,
+  epochDateLastUsed integer(128)
+);
