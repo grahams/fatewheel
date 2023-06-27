@@ -3,6 +3,6 @@ services:
     fatewheel:
         restart: unless-stopped
         volumes:
-          - '/home/grahams/src/fatewheel/db/fates.sqlite:/usr/src/app/db/fates.sqlite'
+          - './db/fates.sqlite:/usr/src/app/db/fates.sqlite'
         image: grahams/fatewheel:latest
 
