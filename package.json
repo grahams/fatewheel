@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@slack/bolt": ">=3.6.0",
-    "axios": ">=0.21.0",
+    "axios": ">=1.6.0",
     "dotenv": ">=8.2.0",
     "node-gyp": ">=8.1.0",
     "randsum": ">=1.3.0",
