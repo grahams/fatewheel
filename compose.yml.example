@@ -1,8 +1,8 @@
-version: '3.3'
 services:
     fatewheel:
         restart: unless-stopped
+        env_file: .env
         volumes:
-          - './db/fates.sqlite:/usr/src/app/db/fates.sqlite'
+          - '/opt/docker/data/fatewheel/db/fates.sqlite:/usr/src/app/db/fates.sqlite'
         image: grahams/fatewheel:latest
 
