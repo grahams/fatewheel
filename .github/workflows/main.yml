@@ -10,11 +10,11 @@ on:
   workflow_dispatch:
 
 jobs:
-      push-store-image:
+      push-fatewheel-image:
         runs-on: ubuntu-latest
         defaults:
           run:
-            working-directory: './Store'
+            working-directory: './fatewheel'
         steps:
           - name: 'Checkout GitHub Action'
             uses: actions/checkout@main
@@ -28,5 +28,5 @@ jobs:
 
           - name: 'Build Inventory Image'
             run: |
-              docker build . --tag ghcr.io/grahams/store:latest
-              docker push ghcr.io/grahams/store:latest
+              docker build . --tag ghcr.io/grahams/fatewheel:latest
+              docker push ghcr.io/grahams/fatewheel:latest
