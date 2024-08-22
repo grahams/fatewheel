@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:lts-slim
 LABEL org.opencontainers.image.source="https://github.com/grahams/fatewheel"
 
 # Create app directory
