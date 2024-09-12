@@ -21,7 +21,7 @@
     "dotenv": ">=8.0.0"
   },
   "dependencies": {
-    "@slack/bolt": ">=3.6.0",
+    "@slack/bolt": ">=3.21.4",
     "axios": ">=1.7.4",
     "dotenv": ">=8.2.0",
     "node-gyp": ">=8.1.0",
