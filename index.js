@@ -1,15 +1,11 @@
 const { App, directMention } = require('@slack/bolt');
 const dotenv = require('dotenv');
-const sqlite3 = require('sqlite3');
+const Database = require('better-sqlite3');
 const { roll: rollDice } = require('randsum');
 
 dotenv.config()
 
-let db = new sqlite3.Database(process.env.WHEEL_DB, sqlite3.OPEN_READWRITE, (err) => {
-    if (err) {
-        console.error(err.message);
-    }
-});
+let db = new Database(process.env.WHEEL_DB);
 
 const app = new App({
     signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -200,68 +196,61 @@ function roll(diceString, say) {
 }
 
 function addFate(newFate, say) {
-    db.all(`SELECT * FROM fates WHERE message = ?`,[newFate.toUpperCase()], (err, rows) => {
-        if (err) {
-            return console.log(err.message);
-        }
+    try {
+        const rows = db.prepare(`SELECT * FROM fates WHERE message = ?`).all(newFate.toUpperCase());
 
         if(rows.length > 0) {
             say(`"${newFate.toUpperCase()}" ALREADY EXISTS.\nDEATH IS LISTENING, AND WILL TAKE THE FIRST MAN THAT SCREAMS`);
         }
         else {
-            db.run(`INSERT INTO fates VALUES(?, ?, ?, ?)`, [newFate.toUpperCase(), Date.now(), Date.now(), null], 
-                function(err) {
-                    if (err) {
-                        return console.log(err.message);
-                    }
-
-                    say(`ADDED NEW FATE "${newFate.toUpperCase()}" WITH ID ${this.lastID}.\nCONGRATULATIONS! YOU'RE THE FIRST TO SURVIVE THE AUDITION! `);
-                }
-            );
+            const result = db.prepare(`INSERT INTO fates VALUES(?, ?, ?, ?)`).run(newFate.toUpperCase(), Date.now(), Date.now(), null);
+            say(`ADDED NEW FATE "${newFate.toUpperCase()}" WITH ID ${result.lastInsertRowid}.\nCONGRATULATIONS! YOU'RE THE FIRST TO SURVIVE THE AUDITION! `);
         }
-    });
+    } catch(err) {
+        console.error(err.message);
+    }
 }
 
 function rmMessage(table, rowId, say) {
-    db.run(`DELETE FROM ${table} WHERE ROWID = ?`, [rowId], err => {
-        if (err) {
-            return console.log(err.message);
-        }
-
-        say(`REMOVED FATE WITH ID ${rowId}\nONE DAY, COCK OF THE WALK. NEXT, A FEATHER DUSTER.`);}
-    );
+    try {
+        db.prepare(`DELETE FROM ${table} WHERE ROWID = ?`).run(rowId);
+        say(`REMOVED FATE WITH ID ${rowId}\nONE DAY, COCK OF THE WALK. NEXT, A FEATHER DUSTER.`);
+    } catch(err) {
+        console.error(err.message);
+    }
 }
 
 function rmLastMessage(table, say) {
-    db.all(`SELECT rowid,message,epochDateLastUsed 
+    try {
+        const rows = db.prepare(`SELECT rowid,message,epochDateLastUsed 
                 FROM ${table} 
                 WHERE epochDateLastUsed IS NOT NULL
                 ORDER BY epochDateLastUsed 
                 DESC 
-                LIMIT 1;`, (err, rows) => {
-        if (err) {
-            return console.log(err.message);
+                LIMIT 1`).all();
+        
+        if(rows.length > 0) {
+            rmMessage(table, rows[0].rowid, say);
         }
-
-        rmMessage(table, rows[0].rowid, say);
-    })
+    } catch(err) {
+        console.error(err.message);
+    }
 }
 
 function getMessage(table, rowId, say) {
-    db.get(`SELECT * FROM ${table} WHERE ROWID = ?`, [rowId], (err, row) => {
-        if (err) {
-            return console.log(err.message);
+    try {
+        const row = db.prepare(`SELECT * FROM ${table} WHERE ROWID = ?`).get(rowId);
+        if (row) {
+            say(`${rowId}: ${row.message}`);
         }
-
-        say(`${rowId}: ${row.message}`);
-    });
+    } catch(err) {
+        console.error(err.message);
+    }
 }
 
 function search(table, term, say) {
-    db.all(`SELECT rowid,message FROM ${table} WHERE message LIKE "%${term}%" LIMIT 15;`, (err, rows) => {
-        if (err) {
-            return console.log(err.message);
-        }
+    try {
+        const rows = db.prepare(`SELECT rowid,message FROM ${table} WHERE message LIKE ? LIMIT 15`).all(`%${term}%`);
 
         let responseMessage = "";
 
@@ -274,14 +263,14 @@ function search(table, term, say) {
         }
 
         say(responseMessage);
-    });
+    } catch(err) {
+        console.error(err.message);
+    }
 }
 
 function getRecentlyAdded(table, say) {
-    db.all(`SELECT rowid,message FROM ${table} ORDER BY ROWID DESC LIMIT 10;`, (err, rows) => {
-        if (err) {
-            return console.log(err.message);
-        }
+    try {
+        const rows = db.prepare(`SELECT rowid,message FROM ${table} ORDER BY ROWID DESC LIMIT 10`).all();
 
         let responseMessage = "";
 
@@ -290,19 +279,19 @@ function getRecentlyAdded(table, say) {
         }
 
         say(responseMessage);
-    });
+    } catch(err) {
+        console.error(err.message);
+    }
 }
 
 function getRecentlyUsed(table, say) {
-    db.all(`SELECT rowid,message,epochDateLastUsed 
+    try {
+        const rows = db.prepare(`SELECT rowid,message,epochDateLastUsed 
                 FROM ${table} 
                 WHERE epochDateLastUsed IS NOT NULL
                 ORDER BY epochDateLastUsed 
                 DESC 
-                LIMIT 10;`, (err, rows) => {
-        if (err) {
-            return console.log(err.message);
-        }
+                LIMIT 10`).all();
 
         let responseMessage = "";
 
@@ -311,62 +300,71 @@ function getRecentlyUsed(table, say) {
         }
 
         say(responseMessage);
-    });
+    } catch(err) {
+        console.error(err.message);
+    }
 }
 
 function messageWith(table, text, say) {
-    db.get(`SELECT message,rowId FROM ${table} ORDER BY RANDOM() LIMIT 1;`, (error, row) => {
-        say(`${row.message} ${text}`.toUpperCase());
-        updateUsedDate(table, row.rowid);
-    });
+    try {
+        const row = db.prepare(`SELECT message,rowid FROM ${table} ORDER BY RANDOM() LIMIT 1`).get();
+        if (row) {
+            say(`${row.message} ${text}`.toUpperCase());
+            updateUsedDate(table, row.rowid);
+        }
+    } catch(err) {
+        console.error(err.message);
+    }
 }
 
 function throwBean(sourceUser, target, say) {
-    db.get("SELECT message,rowId FROM beans ORDER BY RANDOM() LIMIT 1;", (error, row) => {
-        let message = `<@${sourceUser}> gives ${target} an Every Flavour Bean to munch on.  It is ${row.message} flavoured!`
-        say(message);
-        updateUsedDate('beans', row.rowid);
-    });
+    try {
+        const row = db.prepare("SELECT message,rowid FROM beans ORDER BY RANDOM() LIMIT 1").get();
+        if (row) {
+            let message = `<@${sourceUser}> gives ${target} an Every Flavour Bean to munch on.  It is ${row.message} flavoured!`
+            say(message);
+            updateUsedDate('beans', row.rowid);
+        }
+    } catch(err) {
+        console.error(err.message);
+    }
 }
 
 function addBean(newBean, say) {
-    db.all(`SELECT * FROM beans WHERE message = ?`, [newBean], (err, rows) => {
-        if (err) {
-            return console.log(err.message);
-        }
+    try {
+        const rows = db.prepare(`SELECT * FROM beans WHERE message = ?`).all(newBean);
 
         if(rows.length > 0) {
             say(`"${newBean}" ALREADY EXISTS.\nDEATH IS LISTENING, AND WILL TAKE THE FIRST MAN THAT SCREAMS`);
         }
         else {
-            db.run(`INSERT INTO beans VALUES(?, ?, ?, ?)`, [newBean, Date.now(), Date.now(), null], 
-                function(err) {
-                    if (err) {
-                        return console.log(err.message);
-                    }
-
-                    say(`Added new bean "${newBean}" with id ${this.lastID}.`);
-                }
-            );
+            const result = db.prepare(`INSERT INTO beans VALUES(?, ?, ?, ?)`).run(newBean, Date.now(), Date.now(), null);
+            say(`Added new bean "${newBean}" with id ${result.lastInsertRowid}.`);
         }
-    });
+    } catch(err) {
+        console.error(err.message);
+    }
 }
 
 function sendFate(say) {
-    db.get("SELECT message,rowId FROM fates ORDER BY RANDOM() LIMIT 1;", (error, row) => {
-        say(row.message.toUpperCase());
-        updateUsedDate('fates', row.rowid);
-    });
+    try {
+        const row = db.prepare("SELECT message,rowid FROM fates ORDER BY RANDOM() LIMIT 1").get();
+        if (row) {
+            say(row.message.toUpperCase());
+            updateUsedDate('fates', row.rowid);
+        }
+    } catch(err) {
+        console.error(err.message);
+    }
 }
 
 function updateUsedDate(table, rowId) {
-    let newDate = Date.now();
-
-    db.run(`UPDATE ${table} 
+    try {
+        let newDate = Date.now();
+        db.prepare(`UPDATE ${table} 
                 SET epochDateLastUsed = ?
-                WHERE ROWID = ?`, [newDate, rowId], err => {
-        if (err) {
-            return console.log(err.message);
-        }
-    });
+                WHERE ROWID = ?`).run(newDate, rowId);
+    } catch(err) {
+        console.error(err.message);
+    }
 }

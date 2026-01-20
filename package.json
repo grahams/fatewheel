@@ -23,10 +23,8 @@
   "dependencies": {
     "@slack/bolt": ">=4.6.0",
     "axios": ">=1.13.2",
+    "better-sqlite3": "^12.6.2",
     "dotenv": ">=17.2.3",
-    "node-gyp": ">=12.1.0",
-    "randsum": ">=9.0.4",
-    "sqlite3": ">=5.1.7",
-    "tar": ">=7.5.4"
+    "randsum": ">=9.0.4"
   }
 }
