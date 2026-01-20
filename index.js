@@ -1,7 +1,7 @@
 const { App, directMention } = require('@slack/bolt');
 const dotenv = require('dotenv');
 const sqlite3 = require('sqlite3');
-const randsum = require('randsum').default
+const { roll: rollDice } = require('randsum');
 
 dotenv.config()
 
@@ -25,7 +25,7 @@ const app = new App({
   console.log('fatewheel is running!');
 })();
 
-app.message(directMention(), async ({ message, say }) => {
+app.message(directMention, async ({ message, say }) => {
     const re = new RegExp(/<@(.*)>\s+(\S+)\s*(.*)?/);
 
     if(message.text === undefined) {
@@ -178,18 +178,20 @@ function roll(diceString, say) {
     var message = "Error, check your syntax" 
 
     try {
-        var rolls = randsum(diceString, { detailed: true });
+        var result = rollDice(diceString);
+        var rolls = result.result; // In v9, individual rolls are in result.result array
+        var total = result.total;
 
-        if(rolls.rolls.length > 1) {
-            message = `The total was ${rolls.total} and the individual rolls were [${rolls.rolls[0]}`;
-            for(var x = 1; x < rolls.rolls.length; x += 1) {
-                message += `, ${rolls.rolls[x]}`
+        if(rolls.length > 1) {
+            message = `The total was ${total} and the individual rolls were [${rolls[0]}`;
+            for(var x = 1; x < rolls.length; x += 1) {
+                message += `, ${rolls[x]}`
             }
 
             message += '].'
         }
         else {
-            message = `The roll was ${rolls.total}.`;
+            message = `The roll was ${total}.`;
         }
     }
     catch(e) {}

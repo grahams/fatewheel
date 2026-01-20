@@ -18,15 +18,15 @@
   },
   "homepage": "https://github.com/grahams/fatewheel#readme",
   "devDependencies": {
-    "dotenv": ">=8.0.0"
+    "dotenv": ">=17.2.3"
   },
   "dependencies": {
-    "@slack/bolt": ">=3.21.4",
-    "axios": ">=1.12.1",
-    "dotenv": ">=8.2.0",
-    "node-gyp": ">=8.1.0",
-    "randsum": ">=1.3.0",
-    "sqlite3": ">=5.1.6",
-    "tar": ">=7.5.3"
+    "@slack/bolt": ">=4.6.0",
+    "axios": ">=1.13.2",
+    "dotenv": ">=17.2.3",
+    "node-gyp": ">=12.1.0",
+    "randsum": ">=9.0.4",
+    "sqlite3": ">=5.1.7",
+    "tar": ">=7.5.4"
   }
 }
