@@ -1,7 +1,7 @@
 const { App, directMention } = require('@slack/bolt');
 const dotenv = require('dotenv');
 const Database = require('better-sqlite3');
-const { roll: rollDice } = require('randsum');
+const { DiceRoll } = require('@dice-roller/rpg-dice-roller');
 
 dotenv.config()
 
@@ -174,8 +174,15 @@ function roll(diceString, say) {
     var message = "Error, check your syntax" 
 
     try {
-        var result = rollDice(diceString);
-        var rolls = result.result; // In v9, individual rolls are in result.result array
+        var result = new DiceRoll(diceString);
+        var rolls = [];
+        for (var g of result.rolls) {
+            if (g && Array.isArray(g.rolls)) {
+                for (var die of g.rolls) {
+                    rolls.push(die.value);
+                }
+            }
+        }
         var total = result.total;
 
         if(rolls.length > 1) {

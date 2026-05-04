@@ -21,10 +21,13 @@
     "dotenv": ">=17.2.3"
   },
   "dependencies": {
+    "@dice-roller/rpg-dice-roller": "^5.5.1",
     "@slack/bolt": ">=4.6.0",
     "axios": ">=1.15.0",
     "better-sqlite3": "^12.6.2",
-    "dotenv": ">=17.2.3",
-    "randsum": ">=9.0.4"
+    "dotenv": ">=17.2.3"
+  },
+  "overrides": {
+    "mathjs": "^15.2.0"
   }
 }
