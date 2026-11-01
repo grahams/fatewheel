@@ -1,4 +1,4 @@
-FROM node:lts-slim
+FROM node:26-slim
 LABEL org.opencontainers.image.source="https://github.com/grahams/fatewheel"
 
 # Create app directory
@@ -9,7 +9,7 @@ WORKDIR /usr/src/app
 # copied where available (npm@5+)
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci --ignore-scripts
 
 # Bundle app source
 COPY . .
