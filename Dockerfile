@@ -9,9 +9,14 @@ WORKDIR /usr/src/app
 # copied where available (npm@5+)
 COPY package*.json ./
 
-RUN npm ci --ignore-scripts
+# Remove npm after installing: the app never uses it at runtime, and the copy
+# bundled with the node image drags in its own vulnerable deps (undici,
+# brace-expansion, ...).
+RUN npm ci --ignore-scripts \
+    && npm cache clean --force \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # Bundle app source
 COPY . .
 
-CMD [ "npm", "start" ]
+CMD [ "node", "index.js" ]
